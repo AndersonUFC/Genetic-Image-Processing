@@ -618,6 +618,26 @@ void IG_predictive(Image_Gene* ig){
     ig->data = new_data;
 }// IG_predictive
 
+void IG_predictive_inv(Image_Gene* ig){
+    int* data = ig->data;
+    int size = ig->size;
+    int* new_data = new int[size];
+
+    int g_index = size/3;
+    int b_index = (2*size)/3;
+    new_data[0] = data[0];
+    new_data[g_index] = data[g_index];
+    new_data[b_index] = data[b_index];
+
+    for(int i = 1 ; i < g_index ; i++){
+        new_data[i] = data[i] + data[i-1];
+        new_data[i+g_index] = data[i+g_index] + data[i-1+g_index];
+        new_data[i+b_index] = data[i+b_index] + data[i-1+b_index];
+    }// for
+
+    ig->data = new_data;
+}// IG_predictive_Inverse
+
 void IG_run_length(Image_Gene* ig){
     int* data = ig->data;
     int size = ig->size;
@@ -693,8 +713,133 @@ void IG_run_length(Image_Gene* ig){
 
 }//IG_run_length
 
-void int_to_binary_array(int num, std::vector<int> new_data_v){
+void IG_run_length_inv(Image_Gene* ig){
+    int cor = 0;
+    std::vector<int> new_data_v;
+    for(int i=0, size=ig->size; i<size; i+=2){
+        cor = ig->data[i];
+        for(int j=0, size_j=ig->data[i+1]; j<size_j; j++){
+            new_data_v.push_back(cor);
+        }
+    }
 
+    int je = new_data_v.size();
+    free(ig->data);
+    ig->data = new int[je];
+
+    for(int i = 0 ; i < je ; i++){
+        ig->data[i] = new_data_v.at(i);
+    }
+    ig->size = je;
+
+}//IG_run_length_Inverse
+
+void IG_run_length_byte(Image_Gene* ig){
+    int* data = ig->data;
+    int size = ig->size;
+
+    std::vector<int> rlr, rlg, rlb;
+    int current_r, current_g, current_b,
+        acc_r = 1, acc_g = 1, acc_b = 1;
+
+    int g_index = size/3;
+    int b_index = (2*size)/3;
+
+    current_r = data[0];
+    current_g = data[g_index];
+    current_b = data[b_index];
+
+    rlr.push_back(current_r);
+    rlg.push_back(current_g);
+    rlb.push_back(current_b);
+    for(int i = 1 ; i < g_index ; i++){
+
+        if(data[i] == current_r){
+            acc_r++;
+            if(acc_r>255){
+                rlr.push_back(255);
+                acc_r = 1;
+                rlr.push_back(current_r);
+            }
+        } else {
+            rlr.push_back(acc_r);
+            acc_r = 1;
+            current_r = data[i];
+            rlr.push_back(current_r);
+        }// if-else
+
+        if(data[i+g_index] == current_g){
+            acc_g++;
+            if(acc_g>255){
+                rlg.push_back(255);
+                acc_g = 1;
+                rlg.push_back(current_g);
+            }
+        } else {
+            rlg.push_back(acc_g);
+            acc_g = 1;
+            current_g = data[i+g_index];
+            rlg.push_back(current_g);
+        }// if-else
+
+        if(data[i+b_index] == current_b){
+            acc_b++;
+            if(acc_b>255){
+                rlb.push_back(255);
+                acc_b = 1;
+                rlb.push_back(current_b);
+            }
+        } else {
+
+            rlb.push_back(acc_b);
+            acc_b = 1;
+            current_b = data[i+b_index];
+            rlb.push_back(current_b);
+        }// if-else
+    } //for
+
+    rlr.push_back(acc_r);
+    rlg.push_back(acc_g);
+    rlb.push_back(acc_b);
+    int rs = rlr.size(), gs = rlg.size(), bs = rlb.size();
+    int* new_data = new int[rs + gs + bs];
+
+    int* rdata = rlr.data(), *gdata = rlg.data(), *bdata = rlb.data();
+
+
+    for(int i = 0 ; i < rs ; i++){
+        new_data[i] = rdata[i];
+    }
+
+    for(int i = 0 ; i < gs ; i++){
+        new_data[i+rs] = gdata[i];
+    }
+
+    for(int i = 0 ; i < bs ; i++){
+        new_data[i+rs+gs] = bdata[i];
+    }
+
+    ig->data = new_data;
+    ig->size = rs+gs+bs;
+
+}//IG_run_length
+
+void sum(int value, Image_Gene* ig){
+
+    for(int i = 0 ; i < ig->size; i++)
+        ig->data[i] = ig->data[i] + value;
+}
+
+
+void int_to_binary_array(int value, std::vector<int>* new_data_v){
+    //std::cout << value << " ----------------------------------------------------------------\n";
+    //for(int i=0;i<32;++i)
+    for(int i=17;i>=0;--i)
+    {
+        //std::cout << ((value >> i) & 1);
+        new_data_v->push_back((value >> i) & 1);
+    }
+    //std::cout << "\n";
 }
 
 void IG_huffman(Image_Gene* ig){
@@ -755,14 +900,26 @@ void IG_huffman(Image_Gene* ig){
     // create map <value, binary code>
     IG_BT_create_map(ht);
 
+
+    std::cout << "SIZE--------------------------------------------------\n";
+    std::cout << elements.size();
+    std::cout << "SIZE--------------------------------------------------\n";
+
     std::vector<int> new_data_v;
+    IG_Binary_Tree* bt;
+    int_to_binary_array(elements.size(), &new_data_v);
 
-    new_data_v.push_back();
-    for(int i=0, count=elements.size(); i<count; i++){
+    for(std::map<int,int>::iterator iter = elements.begin(); iter != elements.end(); ++iter)
+    {
+        int_to_binary_array(iter->first, &new_data_v);
+        bt = bt_coding[iter->first];
 
+        for(int j = 0 ; j < 12-bt->bincode_size ; j++)
+            new_data_v.push_back(0);
+        for(int j = 0 ; j < bt->bincode_size ; j++)
+            new_data_v.push_back(bt->bincode[j]);
     }
 
-    IG_Binary_Tree* bt;
     for(int i = 0 ; i < size ; i++){
         bt = bt_coding[data[i]];
         for(int j = 0 ; j < bt->bincode_size ; j++)
@@ -780,7 +937,48 @@ void IG_huffman(Image_Gene* ig){
 }// IG_huffman
 
 void IG_huffman_inv(Image_Gene* ig){
+    std::map<std::string,int> mapa;
+    std::vector<int> new_data_v;
+    std::string kek = "", cod = "";
 
+    int size_val = 18, size_key = 12;
+
+    for(int i=0; i<size_val; i++){
+        kek = kek+std::to_string(ig->data[i]);
+    }
+    int posi, dic_size = std::stoi(kek, nullptr, 2);
+
+
+    std::cout << "size dessa merda\n";
+    std::cout << std::stoull("00000000000000111000001111001011", NULL, 2) << "\n";
+    std::cout << dic_size;
+    std::cout << "cabô\n";
+
+    for(int j=0; j<dic_size; j++){
+        kek = "";
+        cod = "";
+        for(int i=0; i<size_val; i++){
+            posi = size_val + j*(size_val+size_key) + i;
+            kek = kek+std::to_string(ig->data[posi]);
+        }
+        for(int i=0; i<size_key; i++){
+            posi = size_val*2 + j*(size_val+size_key) + i;
+            cod = cod+std::to_string(ig->data[posi]);
+        }
+        mapa[std::to_string(std::stoull(cod))] = std::stoull(kek, NULL, 2);
+    }
+    cod = "";
+    for(int i = size_val+dic_size*(size_val+size_key); i<ig->size; i++){
+        cod = cod+std::to_string(ig->data[i]);
+        if (mapa.count(cod)){
+            new_data_v.push_back(mapa[cod]);
+            cod = "";
+        }
+    }
+
+    intArray_to_img_data(new_data_v, ig);
+
+    std::cout << "cabô de vdd agr\n";
 }
 
 // ================================================================================================
@@ -788,6 +986,16 @@ void IG_huffman_inv(Image_Gene* ig){
 // MISC ===========================================================================================
 // ================================================================================================
 // ================================================================================================
+void intArray_to_img_data(std::vector<int> new_data_v, Image_Gene* ig){
+    int je = new_data_v.size();
+    free(ig->data);
+    ig->data = new int[je];
+
+    for(int i = 0 ; i < je ; i++){
+        ig->data[i] = new_data_v.at(i);
+    }
+    ig->size = je;
+}
 
 void IG_print(Image_Gene* ig){
 

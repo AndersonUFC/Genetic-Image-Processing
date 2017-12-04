@@ -77,12 +77,23 @@ void IG_haar2D_inv_subdivide_float(Image_Gene_Float*);
 
 // COMPRESSION ====================================================================================
 void IG_predictive(Image_Gene*);
+void IG_predictive_inv(Image_Gene*);
+
 void IG_run_length(Image_Gene*);
+void IG_run_length_inv(Image_Gene*);
+void IG_run_length_byte(Image_Gene*);
+
+
+void sum(int, Image_Gene*);
+
+void int_to_binary_array(int, std::vector<int>*);
 
 void IG_huffman(Image_Gene*);
 void IG_huffman_inv(Image_Gene*);
 
 // MISC ===========================================================================================
+void intArray_to_img_data(std::vector<int>, Image_Gene*);
+
 void IG_print(Image_Gene*);
 
 // BINARY TREE ====================================================================================
