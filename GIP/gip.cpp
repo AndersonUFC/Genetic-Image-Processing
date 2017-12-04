@@ -2,6 +2,8 @@
 
 #include <iostream>
 #include <cmath>
+#include <time.h>
+#include <stdlib.h>
 
 // ================================================================================================
 // ================================================================================================
@@ -70,6 +72,42 @@ void configure_data(int* data, int size, int** new_data){
     *new_data = d;
 }// configure data
 
+Image_Gene_Float* IG_int_to_float(Image_Gene* ig){
+    Image_Gene_Float* kek = new Image_Gene_Float;
+
+    kek->compression_level = ig->compression_level;
+    kek->height = ig->height;
+    kek->max_compression_level = ig->max_compression_level;
+    kek->size = ig->size;
+    kek->subdivisions = ig->subdivisions;
+    kek->width = ig->width;
+
+    kek->data = new float[kek->size];
+
+    for(int i = 0 ; i < kek->size; i++)
+        kek->data[i] = (float)ig->data[i];
+
+    return kek;
+}
+
+Image_Gene* IG_float_to_int(Image_Gene_Float* ig){
+    Image_Gene* kek = new Image_Gene;
+
+    kek->compression_level = ig->compression_level;
+    kek->height = ig->height;
+    kek->max_compression_level = ig->max_compression_level;
+    kek->size = ig->size;
+    kek->subdivisions = ig->subdivisions;
+    kek->width = ig->width;
+
+    kek->data = new int[kek->size];
+
+    for(int i = 0 ; i < kek->size; i++)
+        kek->data[i] = (int)ig->data[i];
+
+    return kek;
+}
+
 // ================================================================================================
 // ================================================================================================
 // TRANSFORMATION =================================================================================
@@ -91,13 +129,27 @@ int* IG_haar1D(int* image, int size, int compression_level){
     return compression;
 }// haar1D
 
+int* IG_haar1D_inv(int* image, int size, int compression_level){
+    int* compression = new int[size];
+    int comp_size = pow(2, compression_level);
+
+    for(int i = 0 ; i < comp_size ; i++){
+        compression[2*i] = image[i] + image[comp_size + i];
+        compression[2*i + 1] = image[i] - image[comp_size + i];
+    }// for
+
+    for(int i = comp_size*2 ; i < size ; i++)
+        compression[i] = image[i];
+
+    return compression;
+}// haar1D_inv
 
 void IG_haar2D(Image_Gene* ig){
 
-    int width_bound = pow(2, ig->compression_level);
-    int* lineR = new int[width_bound];
-    int* lineG = new int[width_bound];
-    int* lineB = new int[width_bound];
+    int bound = pow(2, ig->compression_level);
+    int* lineR = new int[bound];
+    int* lineG = new int[bound];
+    int* lineB = new int[bound];
 
     int height = ig->height;
     int width = ig->width;
@@ -106,50 +158,26 @@ void IG_haar2D(Image_Gene* ig){
     int g_index = ig->size/3;
     int b_index = ((2*ig->size)/3);
 
+
     // LINES
-    for(int y = 0 ; y < height ; y++){
-
-        /* RGB sequential mode
-        // get line
-        for(int x = 0 ; x < width_bound ; x++){
-            int position = (y*width + x)*3;
-
-            //std::cout << position << " ";
-
-            lineR[x] = data[position];
-            lineG[x] = data[position+1];
-            lineB[x] = data[position+2];
-        }// for-x
-
-        int* cR = IG_haar1D(lineR,width_bound,ig->compression_level);
-        int* cG = IG_haar1D(lineG,width_bound,ig->compression_level);
-        int* cB = IG_haar1D(lineB,width_bound,ig->compression_level);
-
-
-        for(int x = 0 ; x < width_bound ; x++){
-            int position = (y*width + x)*3;
-            data[position] = cR[x];
-            data[position+1] = cG[x];
-            data[position+2] = cB[x];
-        }// for-x
-        */
-
+    for(int y = 0 ; y < bound ; y++){
         // R sequence, G sequence, B sequence
         // get line
-        for(int x = 0 ; x < width_bound ; x++){
+        for(int x = 0 ; x < bound ; x++){
             int position = y*width + x;
 
             lineR[x] = data[position];
             lineG[x] = data[position+g_index];
             lineB[x] = data[position+b_index];
+
         }// for-x
 
 
-        int* cR = IG_haar1D(lineR,width_bound,ig->compression_level);
-        int* cG = IG_haar1D(lineG,width_bound,ig->compression_level);
-        int* cB = IG_haar1D(lineB,width_bound,ig->compression_level);
+        int* cR = IG_haar1D(lineR,bound,ig->compression_level);
+        int* cG = IG_haar1D(lineG,bound,ig->compression_level);
+        int* cB = IG_haar1D(lineB,bound,ig->compression_level);
 
-        for(int x = 0 ; x < width_bound ; x++){
+        for(int x = 0 ; x < bound ; x++){
             int position = y*width + x;
             data[position] = cR[x];
             data[position+g_index] = cG[x];
@@ -162,35 +190,11 @@ void IG_haar2D(Image_Gene* ig){
         cR = NULL;
         cG = NULL;
         cB = NULL;
-
     }// for-y
 
-    int height_bound = width_bound;
+    int height_bound = bound;
     // COLUMNS
-    for(int x = 0 ; x < width ; x++){
-
-        /*
-        // get column
-        for(int y = 0 ; y < height_bound ; y++){
-            int position = (y*width + x)*3;
-
-            lineR[y] = data[position];
-            lineG[y] = data[position+1];
-            lineB[y] = data[position+2];
-        }// for-x
-
-        int* cR = IG_haar1D(lineR,width_bound,ig->compression_level);
-        int* cG = IG_haar1D(lineG,width_bound,ig->compression_level);
-        int* cB = IG_haar1D(lineB,width_bound,ig->compression_level);
-
-        for(int y = 0 ; y < height_bound; y++){
-            int position = (y*width + x)*3;
-            data[position] = cR[y];
-            data[position+1] = cG[y];
-            data[position+2] = cB[y];
-        }// for-x
-        */
-
+    for(int x = 0 ; x < bound ; x++){
         // get column
         for(int y = 0 ; y < height_bound ; y++){
             int position = y*width + x;
@@ -198,11 +202,12 @@ void IG_haar2D(Image_Gene* ig){
             lineR[y] = data[position];
             lineG[y] = data[position+g_index];
             lineB[y] = data[position+b_index];
+
         }// for-x
 
-        int* cR = IG_haar1D(lineR,width_bound,ig->compression_level);
-        int* cG = IG_haar1D(lineG,width_bound,ig->compression_level);
-        int* cB = IG_haar1D(lineB,width_bound,ig->compression_level);
+        int* cR = IG_haar1D(lineR,height_bound,ig->compression_level);
+        int* cG = IG_haar1D(lineG,height_bound,ig->compression_level);
+        int* cB = IG_haar1D(lineB,height_bound,ig->compression_level);
 
         for(int y = 0 ; y < height_bound; y++){
             int position = y*width + x;
@@ -220,18 +225,372 @@ void IG_haar2D(Image_Gene* ig){
     }// for-y
 
 
+
     ig->data = data;
     ig->compression_level--;
     ig->subdivisions++;
 
 }// haar2D
 
+float* IG_haar1D_float(float* image, int size, int compression_level){
+    float* compression = new float[size];
+    int comp_size = pow(2, compression_level-1);
+
+    for(int i = 0 ; i < comp_size ; i++){
+        compression[i] = (image[2*i] + image[2*i+1])/2;
+        compression[comp_size + i] = image[2*i] - compression[i];
+    }// for
+
+    for(int i = comp_size*2 ; i < size ; i++)
+        compression[i] = image[i];
+
+    return compression;
+}// haar1D
+
+float* IG_haar1D_float_inv(float* image, int size, int compression_level){
+    float* compression = new float[size];
+    int comp_size = pow(2, compression_level);
+
+    for(int i = 0 ; i < comp_size ; i++){
+        compression[2*i] = image[i] + image[comp_size + i];
+        compression[2*i + 1] = image[i] - image[comp_size + i];
+    }// for
+
+    for(int i = comp_size*2 ; i < size ; i++)
+        compression[i] = image[i];
+
+    return compression;
+}// haar1D_inv
+
+void IG_haar2D_subdivide_float(Image_Gene_Float* ig){
+    int bound = pow(2, ig->compression_level);
+    float* lineR = new float[bound];
+    float* lineG = new float[bound];
+    float* lineB = new float[bound];
+
+    int width = ig->width;
+    float* data = ig->data;
+
+    int g_index = ig->size/3;
+    int b_index = ((2*ig->size)/3);
+
+    int region_step_index = width/pow(2, ig->subdivisions);
+
+    for(int sub_vert = 0 ; sub_vert < pow(2, ig->subdivisions) ; sub_vert++){
+        for(int sub_hor = 0 ; sub_hor < pow(2, ig->subdivisions) ; sub_hor++){
+            // LINES
+            for(int y = region_step_index*sub_vert ; y < region_step_index*(sub_vert+1) ; y++){
+
+                // R sequence, G sequence, B sequence
+                // get line
+                int i = 0;
+                for(int x = region_step_index*sub_hor ; x < region_step_index*(sub_hor+1) ; x++){
+                    int position = y*width + x;
+
+                    lineR[i] = data[position];
+                    lineG[i] = data[position+g_index];
+                    lineB[i] = data[position+b_index];
+                    i++;
+                }// for-x
+
+                float* cR = IG_haar1D_float(lineR,region_step_index,ig->compression_level);
+                float* cG = IG_haar1D_float(lineG,region_step_index,ig->compression_level);
+                float* cB = IG_haar1D_float(lineB,region_step_index,ig->compression_level);
+
+                i = 0;
+                for(int x = region_step_index*sub_hor ; x < region_step_index*(sub_hor+1) ; x++){
+                    int position = y*width + x;
+
+                    data[position] = cR[i];
+                    data[position+g_index] = cG[i];
+                    data[position+b_index] = cB[i];
+                    i++;
+                }// for-x
+            }// for-y
+
+            // COLUMNS
+            for(int x = region_step_index*sub_hor ; x < region_step_index*(sub_hor+1) ; x++){
+                int i = 0;
+                // get column
+                for(int y = region_step_index*sub_vert ; y < region_step_index*(sub_vert+1) ; y++){
+                    int position = y*width + x;
+
+                    lineR[i] = data[position];
+                    lineG[i] = data[position+g_index];
+                    lineB[i] = data[position+b_index];
+                    i++;
+                }// for-x
+
+                float* cR = IG_haar1D_float(lineR,region_step_index,ig->compression_level);
+                float* cG = IG_haar1D_float(lineG,region_step_index,ig->compression_level);
+                float* cB = IG_haar1D_float(lineB,region_step_index,ig->compression_level);
+
+                i = 0;
+                for(int y = region_step_index*sub_vert ; y < region_step_index*(sub_vert+1); y++){
+                    int position = y*width + x;
+                    data[position] = cR[i];
+                    data[position+g_index] = cG[i];
+                    data[position+b_index] = cB[i];
+                    i++;
+                }// for-x
+            }// for-y
+        } // horizontal subdivisions
+    }// vertical subdivisions
+
+    ig->data = data;
+    ig->compression_level--;
+    ig->subdivisions++;
+}// haar2D
+
+void IG_haar2D_inv_subdivide_float(Image_Gene_Float* ig){
+    int bound = pow(2, ig->compression_level+1);
+    float* lineR = new float[bound];
+    float* lineG = new float[bound];
+    float* lineB = new float[bound];
+    int width = ig->width;
+    float* data = ig->data;
+
+    int g_index = ig->size/3;
+    int b_index = ((2*ig->size)/3);
+    int region_step_index = width/pow(2, ig->subdivisions-1);
+
+    for(int sub_vert = 0 ; sub_vert < pow(2, ig->subdivisions-1) ; sub_vert++){
+        for(int sub_hor = 0 ; sub_hor < pow(2, ig->subdivisions-1) ; sub_hor++){
+            // LINES
+            for(int y = region_step_index*sub_vert ; y < region_step_index*(sub_vert+1) ; y++){
+
+                // R sequence, G sequence, B sequence
+                // get line
+                int i = 0;
+                for(int x = region_step_index*sub_hor ; x < region_step_index*(sub_hor+1) ; x++){
+
+                    int position = y*width + x;
+                    lineR[i] = data[position];
+                    lineG[i] = data[position+g_index];
+                    lineB[i] = data[position+b_index];
+                    i++;
+                }// for-x
+
+
+                float* cR = IG_haar1D_float_inv(lineR,region_step_index,ig->compression_level);
+                float* cG = IG_haar1D_float_inv(lineG,region_step_index,ig->compression_level);
+                float* cB = IG_haar1D_float_inv(lineB,region_step_index,ig->compression_level);
+
+                i = 0;
+                for(int x = region_step_index*sub_hor ; x < region_step_index*(sub_hor+1) ; x++){
+                    int position = y*width + x;
+
+                    data[position] = cR[i];
+                    data[position+g_index] = cG[i];
+                    data[position+b_index] = cB[i];
+                    i++;
+                }// for-x
+
+            }// for-y
+
+
+            // COLUMNS
+            for(int x = region_step_index*sub_hor ; x < region_step_index*(sub_hor+1) ; x++){
+                // get column
+                int i = 0;
+                for(int y = region_step_index*sub_vert ; y < region_step_index*(sub_vert+1) ; y++){
+                    int position = y*width + x;
+
+                    lineR[i] = data[position];
+                    lineG[i] = data[position+g_index];
+                    lineB[i] = data[position+b_index];
+                    i++;
+                }// for-x
+
+                float* cR = IG_haar1D_float_inv(lineR,region_step_index,ig->compression_level);
+                float* cG = IG_haar1D_float_inv(lineG,region_step_index,ig->compression_level);
+                float* cB = IG_haar1D_float_inv(lineB,region_step_index,ig->compression_level);
+
+                i = 0;
+                for(int y = region_step_index*sub_vert ; y < region_step_index*(sub_vert+1); y++){
+                    int position = y*width + x;
+                    data[position] = cR[i];
+                    data[position+g_index] = cG[i];
+                    data[position+b_index] = cB[i];
+                    i++;
+                }// for-x
+            }// for-y
+
+        } // horizontal subdivisions
+    }// vertical subdivisions
+
+    ig->data = data;
+    ig->compression_level++;
+    ig->subdivisions--;
+}// inv haar2D
+
+// -------------------------------------------------------------------------------------------------
+
+
+void IG_haar2D_subdivide(Image_Gene* ig){
+    int bound = pow(2, ig->compression_level);
+    int* lineR = new int[bound];
+    int* lineG = new int[bound];
+    int* lineB = new int[bound];
+
+    int width = ig->width;
+    int* data = ig->data;
+
+    int g_index = ig->size/3;
+    int b_index = ((2*ig->size)/3);
+
+    int region_step_index = width/pow(2, ig->subdivisions);
+
+    for(int sub_vert = 0 ; sub_vert < pow(2, ig->subdivisions) ; sub_vert++){
+        for(int sub_hor = 0 ; sub_hor < pow(2, ig->subdivisions) ; sub_hor++){
+            // LINES
+            for(int y = region_step_index*sub_vert ; y < region_step_index*(sub_vert+1) ; y++){
+
+                // R sequence, G sequence, B sequence
+                // get line
+                int i = 0;
+                for(int x = region_step_index*sub_hor ; x < region_step_index*(sub_hor+1) ; x++){
+                    int position = y*width + x;
+
+                    lineR[i] = data[position];
+                    lineG[i] = data[position+g_index];
+                    lineB[i] = data[position+b_index];
+                    i++;
+                }// for-x
+
+                int* cR = IG_haar1D(lineR,region_step_index,ig->compression_level);
+                int* cG = IG_haar1D(lineG,region_step_index,ig->compression_level);
+                int* cB = IG_haar1D(lineB,region_step_index,ig->compression_level);
+
+                i = 0;
+                for(int x = region_step_index*sub_hor ; x < region_step_index*(sub_hor+1) ; x++){
+                    int position = y*width + x;
+
+                    data[position] = cR[i];
+                    data[position+g_index] = cG[i];
+                    data[position+b_index] = cB[i];
+                    i++;
+                }// for-x
+            }// for-y
+
+            // COLUMNS
+            for(int x = region_step_index*sub_hor ; x < region_step_index*(sub_hor+1) ; x++){
+                int i = 0;
+                // get column
+                for(int y = region_step_index*sub_vert ; y < region_step_index*(sub_vert+1) ; y++){
+                    int position = y*width + x;
+
+                    lineR[i] = data[position];
+                    lineG[i] = data[position+g_index];
+                    lineB[i] = data[position+b_index];
+                    i++;
+                }// for-x
+
+                int* cR = IG_haar1D(lineR,region_step_index,ig->compression_level);
+                int* cG = IG_haar1D(lineG,region_step_index,ig->compression_level);
+                int* cB = IG_haar1D(lineB,region_step_index,ig->compression_level);
+
+                i = 0;
+                for(int y = region_step_index*sub_vert ; y < region_step_index*(sub_vert+1); y++){
+                    int position = y*width + x;
+                    data[position] = cR[i];
+                    data[position+g_index] = cG[i];
+                    data[position+b_index] = cB[i];
+                    i++;
+                }// for-x
+            }// for-y
+        } // horizontal subdivisions
+    }// vertical subdivisions
+
+    ig->data = data;
+    ig->compression_level--;
+    ig->subdivisions++;
+}// haar2D
+
+void IG_haar2D_inv_subdivide(Image_Gene* ig){
+    int bound = pow(2, ig->compression_level+1);
+    int* lineR = new int[bound];
+    int* lineG = new int[bound];
+    int* lineB = new int[bound];
+    int width = ig->width;
+    int* data = ig->data;
+
+    int g_index = ig->size/3;
+    int b_index = ((2*ig->size)/3);
+    int region_step_index = width/pow(2, ig->subdivisions-1);
+
+    for(int sub_vert = 0 ; sub_vert < pow(2, ig->subdivisions-1) ; sub_vert++){
+        for(int sub_hor = 0 ; sub_hor < pow(2, ig->subdivisions-1) ; sub_hor++){
+            // LINES
+            for(int y = region_step_index*sub_vert ; y < region_step_index*(sub_vert+1) ; y++){
+
+                // R sequence, G sequence, B sequence
+                // get line
+                int i = 0;
+                for(int x = region_step_index*sub_hor ; x < region_step_index*(sub_hor+1) ; x++){
+
+                    int position = y*width + x;
+                    lineR[i] = data[position];
+                    lineG[i] = data[position+g_index];
+                    lineB[i] = data[position+b_index];
+                    i++;
+                }// for-x
+
+
+                int* cR = IG_haar1D_inv(lineR,region_step_index,ig->compression_level);
+                int* cG = IG_haar1D_inv(lineG,region_step_index,ig->compression_level);
+                int* cB = IG_haar1D_inv(lineB,region_step_index,ig->compression_level);
+
+                i = 0;
+                for(int x = region_step_index*sub_hor ; x < region_step_index*(sub_hor+1) ; x++){
+                    int position = y*width + x;
+
+                    data[position] = cR[i];
+                    data[position+g_index] = cG[i];
+                    data[position+b_index] = cB[i];
+                    i++;
+                }// for-x
+
+            }// for-y
+
+
+            // COLUMNS
+            for(int x = region_step_index*sub_hor ; x < region_step_index*(sub_hor+1) ; x++){
+                // get column
+                int i = 0;
+                for(int y = region_step_index*sub_vert ; y < region_step_index*(sub_vert+1) ; y++){
+                    int position = y*width + x;
+
+                    lineR[i] = data[position];
+                    lineG[i] = data[position+g_index];
+                    lineB[i] = data[position+b_index];
+                    i++;
+                }// for-x
+
+                int* cR = IG_haar1D_inv(lineR,region_step_index,ig->compression_level);
+                int* cG = IG_haar1D_inv(lineG,region_step_index,ig->compression_level);
+                int* cB = IG_haar1D_inv(lineB,region_step_index,ig->compression_level);
+
+                i = 0;
+                for(int y = region_step_index*sub_vert ; y < region_step_index*(sub_vert+1); y++){
+                    int position = y*width + x;
+                    data[position] = cR[i];
+                    data[position+g_index] = cG[i];
+                    data[position+b_index] = cB[i];
+                    i++;
+                }// for-x
+            }// for-y
+
+        } // horizontal subdivisions
+    }// vertical subdivisions
+
+    ig->data = data;
+    ig->compression_level++;
+    ig->subdivisions--;
+}// inv haar2D
+
 // ------------------------------------------------------------------------------------------------
 
-void IG_haar1D_subdivide(Image_Gene* ig){
-    IG_print(ig);
-
-}// IG_haar1D_subdivide
 
 // ================================================================================================
 // ================================================================================================
@@ -246,15 +605,6 @@ void IG_predictive(Image_Gene* ig){
 
     int g_index = size/3;
     int b_index = (2*size)/3;
-    /*
-    for(int i = 0 ; i < 3 ; i++)
-        new_data[i] = data[i];
-    for(int i = 3 ; i < size ; i += 3){
-        new_data[i] = data[i] - data[i-3];
-        new_data[i+1] = data[i+1] - data[i-2];
-        new_data[i+2] = data[i+2] - data[i-1];
-    }// for
-    */
     new_data[0] = data[0];
     new_data[g_index] = data[g_index];
     new_data[b_index] = data[b_index];
@@ -343,6 +693,10 @@ void IG_run_length(Image_Gene* ig){
 
 }//IG_run_length
 
+void int_to_binary_array(int num, std::vector<int> new_data_v){
+
+}
+
 void IG_huffman(Image_Gene* ig){
     std::map<int,int> elements;
     int* data = ig->data;
@@ -402,6 +756,12 @@ void IG_huffman(Image_Gene* ig){
     IG_BT_create_map(ht);
 
     std::vector<int> new_data_v;
+
+    new_data_v.push_back();
+    for(int i=0, count=elements.size(); i<count; i++){
+
+    }
+
     IG_Binary_Tree* bt;
     for(int i = 0 ; i < size ; i++){
         bt = bt_coding[data[i]];
@@ -418,6 +778,10 @@ void IG_huffman(Image_Gene* ig){
     }
     ig->size = je;
 }// IG_huffman
+
+void IG_huffman_inv(Image_Gene* ig){
+
+}
 
 // ================================================================================================
 // ================================================================================================

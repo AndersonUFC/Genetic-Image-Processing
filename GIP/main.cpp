@@ -53,8 +53,8 @@ void init(){
 }
 
 int main(int argc, char *argv[]){
-
     CImg<unsigned char> src("lena.bmp");
+    srand(time(NULL));
 
     size = src.size();
     data = new unsigned char[size];
@@ -64,7 +64,47 @@ int main(int argc, char *argv[]){
     w = src.width();
 
     img = IG_new(data,size,w,h);
-    IG_haar2D(img);
+
+    int f = 1,b = 1;
+    if(argc == 3){
+        f = atoi(argv[1]);
+        b = atoi(argv[2]);
+    }
+
+
+    Image_Gene_Float* pau = IG_int_to_float(img);
+
+
+    for(int i = 0 ; i < f ; i++)
+        IG_haar2D_subdivide_float(pau);
+    for(int i = 0 ; i < b ; i++)
+        IG_haar2D_inv_subdivide_float(pau);
+
+    img = IG_float_to_int(pau);
+    IG_predictive(img);
+    IG_run_length(img);
+    IG_huffman(img);
+    IG_print(img);
+
+
+    //IG_haar2D_inv_subdivide(img);
+
+    /*
+    IG_haar2D_subdivide(img);
+    IG_haar2D_subdivide(img);
+    IG_haar2D_subdivide(img);
+    IG_haar2D_subdivide(img);
+    IG_haar2D_subdivide(img);
+    IG_haar2D_subdivide(img);
+    IG_haar2D_subdivide(img);
+
+    IG_predictive(img);
+    IG_run_length(img);
+    IG_huffman(img);
+
+    IG_print(img);
+
+    /*
     IG_haar2D(img);
     IG_haar2D(img);
     IG_haar2D(img);
@@ -74,12 +114,15 @@ int main(int argc, char *argv[]){
     IG_haar2D(img);
     IG_haar2D(img);
 
-    //IG_print(img);
 
     IG_huffman(img);
     IG_run_length(img);
+    IG_huffman(img);
 
     IG_print(img);
+
+    std::cout << "compression level: " << img->compression_level << std::endl;
+    */
 
     /*
     //openGL
@@ -92,38 +135,6 @@ int main(int argc, char *argv[]){
     glutDisplayFunc(display);
     init();
     glutMainLoop();
-
-    */
-
-    int k;
-    std::cin >> k;
-
-    /*
-    unsigned char* d = new unsigned char[12];
-
-    d[0] = 127;
-    d[1] = 128;
-    d[2] = 129;
-    d[3] = 128;
-
-    d[4] = 115;
-    d[5] = 118;
-    d[6] = 117;
-    d[7] = 120;
-
-    d[8] = 0;
-    d[9] = 1;
-    d[10] = 2;
-    d[11] = 3;
-
-    Image_Gene* ig = IG_new(d, 12, 12, 1);
-
-    IG_print(ig);
-    IG_predictive(ig);
-    IG_print(ig);
-    IG_run_length(ig);
-    IG_print(ig);
-
     */
 
     return 0;
