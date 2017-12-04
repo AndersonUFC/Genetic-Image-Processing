@@ -58,6 +58,8 @@ void configure_data(int*,int, int**);
 Image_Gene_Float* IG_int_to_float(Image_Gene*);
 Image_Gene* IG_float_to_int(Image_Gene_Float*);
 
+void mult(float value, Image_Gene_Float* ig);
+
 // TRANSFORMATION =================================================================================
 int* IG_haar1D(int*, int, int);
 int* IG_haar1D_inv(int*, int, int);
@@ -95,6 +97,9 @@ void IG_huffman_inv(Image_Gene*);
 void intArray_to_img_data(std::vector<int>, Image_Gene*);
 
 void IG_print(Image_Gene*);
+
+
+void IG_print_float(Image_Gene_Float*);
 
 // BINARY TREE ====================================================================================
 

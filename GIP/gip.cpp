@@ -102,10 +102,16 @@ Image_Gene* IG_float_to_int(Image_Gene_Float* ig){
 
     kek->data = new int[kek->size];
 
-    for(int i = 0 ; i < kek->size; i++)
+    for(int i = 0 ; i < ig->size; i++)
         kek->data[i] = (int)ig->data[i];
 
     return kek;
+}
+
+void mult(float value, Image_Gene_Float* ig){
+
+    for(int i = 0 ; i < ig->size; i++)
+        ig->data[i] = (ig->data[i] * value);
 }
 
 // ================================================================================================
@@ -621,21 +627,17 @@ void IG_predictive(Image_Gene* ig){
 void IG_predictive_inv(Image_Gene* ig){
     int* data = ig->data;
     int size = ig->size;
-    int* new_data = new int[size];
 
     int g_index = size/3;
     int b_index = (2*size)/3;
-    new_data[0] = data[0];
-    new_data[g_index] = data[g_index];
-    new_data[b_index] = data[b_index];
 
     for(int i = 1 ; i < g_index ; i++){
-        new_data[i] = data[i] + data[i-1];
-        new_data[i+g_index] = data[i+g_index] + data[i-1+g_index];
-        new_data[i+b_index] = data[i+b_index] + data[i-1+b_index];
+        data[i] = data[i] + data[i-1];
+        data[i+g_index] = data[i+g_index] + data[i-1+g_index];
+        data[i+b_index] = data[i+b_index] + data[i-1+b_index];
     }// for
 
-    ig->data = new_data;
+    ig->data = data;
 }// IG_predictive_Inverse
 
 void IG_run_length(Image_Gene* ig){
@@ -834,7 +836,7 @@ void sum(int value, Image_Gene* ig){
 void int_to_binary_array(int value, std::vector<int>* new_data_v){
     //std::cout << value << " ----------------------------------------------------------------\n";
     //for(int i=0;i<32;++i)
-    for(int i=17;i>=0;--i)
+    for(int i=31;i>=0;--i)
     {
         //std::cout << ((value >> i) & 1);
         new_data_v->push_back((value >> i) & 1);
@@ -914,7 +916,7 @@ void IG_huffman(Image_Gene* ig){
         int_to_binary_array(iter->first, &new_data_v);
         bt = bt_coding[iter->first];
 
-        for(int j = 0 ; j < 12-bt->bincode_size ; j++)
+        for(int j = 0 ; j < 32-bt->bincode_size ; j++)
             new_data_v.push_back(0);
         for(int j = 0 ; j < bt->bincode_size ; j++)
             new_data_v.push_back(bt->bincode[j]);
@@ -941,7 +943,7 @@ void IG_huffman_inv(Image_Gene* ig){
     std::vector<int> new_data_v;
     std::string kek = "", cod = "";
 
-    int size_val = 18, size_key = 12;
+    int size_val = 32, size_key = 32;
 
     for(int i=0; i<size_val; i++){
         kek = kek+std::to_string(ig->data[i]);
@@ -976,7 +978,14 @@ void IG_huffman_inv(Image_Gene* ig){
         }
     }
 
-    intArray_to_img_data(new_data_v, ig);
+    int je = new_data_v.size();
+    free(ig->data);
+    ig->data = new int[je];
+
+    for(int i = 0 ; i < je ; i++){
+        ig->data[i] = new_data_v.at(i);
+    }
+    ig->size = je;
 
     std::cout << "cabô de vdd agr\n";
 }
@@ -1010,6 +1019,25 @@ void IG_print(Image_Gene* ig){
 
     for(int i = 0 ; i < ig->size ; i++){
         std::cout << (int)ig->data[i] << " ";
+    }// for
+
+    std::cout << "\n";
+    std::cout << "----------------------------------------------------------------\n";
+}// IG_print
+
+void IG_print_float(Image_Gene_Float* ig){
+
+    std::cout << "----------------------------------------------------------------\n";
+    std::cout << "Image:\n";
+    std::cout << "Dimensions: " << ig->width << " x " << ig->height << "\n";
+    std::cout << "Vector Length: " << ig->size << "\n";
+    std::cout << "Current Compression Level: " << ig->compression_level << "\n";
+    std::cout << "Max Compression Level: " << ig->max_compression_level << "\n";
+    std::cout << "Subdividions: " << ig->subdivisions << "\n";
+    std::cout << "Data:\n";
+
+    for(int i = 0 ; i < ig->size ; i++){
+        std::cout << (float)ig->data[i] << " ";
     }// for
 
     std::cout << "\n";

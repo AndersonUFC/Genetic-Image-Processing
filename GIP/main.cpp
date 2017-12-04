@@ -53,7 +53,7 @@ void init(){
 }
 
 int main(int argc, char *argv[]){
-    CImg<unsigned char> src("/home/nfs/andersonUFC/Pictures/lena.bmp");
+    CImg<unsigned char> src("lena.bmp");
     srand(time(NULL));
 
     size = src.size();
@@ -73,28 +73,31 @@ int main(int argc, char *argv[]){
     f = 9;
     b = 9;
 
-    //Image_Gene_Float* pau = IG_int_to_float(img);
-    //for(int i = 0 ; i < f ; i++)
-    //    IG_haar2D_subdivide_float(pau);
-    //for(int i = 0 ; i < b ; i++)
-        //IG_haar2D_inv_subdivide_float(pau);
-    //img = IG_float_to_int(pau);
+    //IG_predictive(img);
+    Image_Gene_Float* pau = IG_int_to_float(img);
+    mult(50, pau);
+    for(int i = 0 ; i < f ; i++)
+        IG_haar2D_subdivide_float(pau);
+
+    img = IG_float_to_int(pau);
 
     IG_predictive(img);
-    //sum(170, img);
-    //IG_run_length(img);
-    //IG_huffman(img);
-
-    //IG_huffman_inv(img);
-    //IG_run_length_inv(img);
-    //sum(-170, img);
+    sum(8500, img);
+    IG_run_length(img);
+    IG_huffman(img);
+    IG_print(img);
+    IG_huffman_inv(img);
+    //
+    IG_run_length_inv(img);
+    sum(-8500, img);
     IG_predictive_inv(img);
 
-    //pau = IG_int_to_float(img);
-    //for(int i = 0 ; i < b ; i++)
-    //        IG_haar2D_inv_subdivide_float(pau);
-
-    //img = IG_float_to_int(pau);
+    pau = IG_int_to_float(img);
+    for(int i = 0 ; i < b ; i++)
+            IG_haar2D_inv_subdivide_float(pau);
+    mult(0.02, pau);
+    img = IG_float_to_int(pau);
+    //IG_predictive_inv(img);
     //IG_print(img);
 
 
