@@ -4,6 +4,7 @@
 #include <cmath>
 #include <time.h>
 #include <stdlib.h>
+#include <fstream>
 
 // ================================================================================================
 // ================================================================================================
@@ -844,6 +845,18 @@ void int_to_binary_array(int value, std::vector<int>* new_data_v){
     //std::cout << "\n";
 }
 
+void char_to_binary_array(char value, std::vector<int>* new_data_v){
+    //std::cout << value << " ----------------------------------------------------------------\n";
+    //for(int i=0;i<7;i++)
+    for(int i=7;i>=0;--i)
+    {
+        //std::cout << ((value >> i) & 1) << " ";
+        new_data_v->push_back((value >> i) & 1);
+    }
+    //std::cout << "\n";
+}
+
+
 void IG_huffman(Image_Gene* ig){
     std::map<int,int> elements;
     int* data = ig->data;
@@ -1044,6 +1057,54 @@ void IG_print_float(Image_Gene_Float* ig){
     std::cout << "----------------------------------------------------------------\n";
 }// IG_print
 
+
+void IG_save_file(Image_Gene* ig, std::string name){
+
+
+    std::ofstream file (name+".bin", std::ios::binary);
+    std::string bin = "";
+    for(int i=0, size=ig->size; i<size; i+=8){
+        bin = "";
+        for(int j=0; j<8; j++){
+            if(i+j>size){
+                bin += "1";
+            }else{
+                bin += std::to_string(ig->data[i+j]);
+            }
+        }
+        char c = std::strtol(bin.c_str(), 0, 2);
+        file.write ((char *)&c, 1);
+    }
+    file.close ();
+}// IG_print
+
+using namespace std;
+
+void IG_read_file(Image_Gene* ig, std::string name){
+
+
+    ifstream fl(name+".bin");
+    fl.seekg( 0, ios::end );
+    size_t len = fl.tellg();
+    char *ret = new char[len];
+    fl.seekg(0, ios::beg);
+    fl.read(ret, len);
+    fl.close();
+
+    std::vector<int> new_data_v;
+    for(int i=0; i<len; i++){
+        char_to_binary_array(ret[i], &new_data_v);
+    }
+    int je = new_data_v.size();
+    free(ig->data);
+    ig->data = new int[je];
+
+    for(int i = 0 ; i < je ; i++){
+        ig->data[i] = new_data_v.at(i);
+    }
+    ig->size = je;
+
+}// IG_print
 // ================================================================================================
 // ================================================================================================
 // BINARY TREE ====================================================================================

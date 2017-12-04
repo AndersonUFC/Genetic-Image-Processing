@@ -89,6 +89,7 @@ void IG_run_length_byte(Image_Gene*);
 void sum(int, Image_Gene*);
 
 void int_to_binary_array(int, std::vector<int>*);
+void char_to_binary_array(char, std::vector<int>*);
 
 void IG_huffman(Image_Gene*);
 void IG_huffman_inv(Image_Gene*);
@@ -97,9 +98,10 @@ void IG_huffman_inv(Image_Gene*);
 void intArray_to_img_data(std::vector<int>, Image_Gene*);
 
 void IG_print(Image_Gene*);
-
-
 void IG_print_float(Image_Gene_Float*);
+
+void IG_save_file(Image_Gene* ig, std::string name);
+void IG_read_file(Image_Gene* ig, std::string name);
 
 // BINARY TREE ====================================================================================
 

@@ -53,7 +53,7 @@ void init(){
 }
 
 int main(int argc, char *argv[]){
-    CImg<unsigned char> src("lena.bmp");
+    CImg<unsigned char> src("/home/nfs/andersonUFC/Pictures/lena.bmp");
     srand(time(NULL));
 
     size = src.size();
@@ -73,7 +73,8 @@ int main(int argc, char *argv[]){
     f = 9;
     b = 9;
 
-    //IG_predictive(img);
+    //Image_Gene_Float* pau = IG_int_to_float(img);
+
     Image_Gene_Float* pau = IG_int_to_float(img);
     mult(50, pau);
     for(int i = 0 ; i < f ; i++)
@@ -85,9 +86,14 @@ int main(int argc, char *argv[]){
     sum(8500, img);
     IG_run_length(img);
     IG_huffman(img);
-    IG_print(img);
+
+    IG_save_file(img, "/home/nfs/andersonUFC/Pictures/lena");
+    std::cout << img->size;
+    //IG_print(img);
+    IG_read_file(img, "/home/nfs/andersonUFC/Pictures/lena");
+    std::cout << img->size;
+
     IG_huffman_inv(img);
-    //
     IG_run_length_inv(img);
     sum(-8500, img);
     IG_predictive_inv(img);
@@ -97,7 +103,6 @@ int main(int argc, char *argv[]){
             IG_haar2D_inv_subdivide_float(pau);
     mult(0.02, pau);
     img = IG_float_to_int(pau);
-    //IG_predictive_inv(img);
     //IG_print(img);
 
 
