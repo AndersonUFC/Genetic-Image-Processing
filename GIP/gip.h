@@ -65,6 +65,7 @@ int* IG_haar1D(int*, int, int);
 int* IG_haar1D_inv(int*, int, int);
 
 void IG_haar2D(Image_Gene*);
+void IG_haar2D_float(Image_Gene_Float*);
 
 void IG_haar2D_subdivide(Image_Gene*);
 void IG_haar2D_inv_subdivide(Image_Gene*);

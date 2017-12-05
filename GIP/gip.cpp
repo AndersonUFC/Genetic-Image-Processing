@@ -239,6 +239,94 @@ void IG_haar2D(Image_Gene* ig){
 
 }// haar2D
 
+void IG_haar2D_float(Image_Gene_Float* ig){
+
+    int bound = pow(2, ig->compression_level);
+    float* lineR = new float[bound];
+    float* lineG = new float[bound];
+    float* lineB = new float[bound];
+
+    int height = ig->height;
+    int width = ig->width;
+    float* data = ig->data;
+
+    int g_index = ig->size/3;
+    int b_index = ((2*ig->size)/3);
+
+
+    // LINES
+    for(int y = 0 ; y < bound ; y++){
+        // R sequence, G sequence, B sequence
+        // get line
+        for(int x = 0 ; x < bound ; x++){
+            int position = y*width + x;
+
+            lineR[x] = data[position];
+            lineG[x] = data[position+g_index];
+            lineB[x] = data[position+b_index];
+
+        }// for-x
+
+
+        float* cR = IG_haar1D_float(lineR,bound,ig->compression_level);
+        float* cG = IG_haar1D_float(lineG,bound,ig->compression_level);
+        float* cB = IG_haar1D_float(lineB,bound,ig->compression_level);
+
+        for(int x = 0 ; x < bound ; x++){
+            int position = y*width + x;
+            data[position] = cR[x];
+            data[position+g_index] = cG[x];
+            data[position+b_index] = cB[x];
+        }// for-x
+
+        free(cR);
+        free(cG);
+        free(cB);
+        cR = NULL;
+        cG = NULL;
+        cB = NULL;
+    }// for-y
+
+    int height_bound = bound;
+    // COLUMNS
+    for(int x = 0 ; x < bound ; x++){
+        // get column
+        for(int y = 0 ; y < height_bound ; y++){
+            int position = y*width + x;
+
+            lineR[y] = data[position];
+            lineG[y] = data[position+g_index];
+            lineB[y] = data[position+b_index];
+
+        }// for-x
+
+        float* cR = IG_haar1D_float(lineR,height_bound,ig->compression_level);
+        float* cG = IG_haar1D_float(lineG,height_bound,ig->compression_level);
+        float* cB = IG_haar1D_float(lineB,height_bound,ig->compression_level);
+
+        for(int y = 0 ; y < height_bound; y++){
+            int position = y*width + x;
+            data[position] = cR[y];
+            data[position+g_index] = cG[y];
+            data[position+b_index] = cB[y];
+        }// for-x
+
+        free(cR);
+        free(cG);
+        free(cB);
+        cR = NULL;
+        cG = NULL;
+        cB = NULL;
+    }// for-y
+
+
+
+    ig->data = data;
+    ig->compression_level--;
+    ig->subdivisions++;
+
+}
+
 float* IG_haar1D_float(float* image, int size, int compression_level){
     float* compression = new float[size];
     int comp_size = pow(2, compression_level-1);
@@ -837,7 +925,7 @@ void sum(int value, Image_Gene* ig){
 void int_to_binary_array(int value, std::vector<int>* new_data_v){
     //std::cout << value << " ----------------------------------------------------------------\n";
     //for(int i=0;i<32;++i)
-    for(int i=31;i>=0;--i)
+    for(int i=23;i>=0;--i)
     {
         //std::cout << ((value >> i) & 1);
         new_data_v->push_back((value >> i) & 1);
@@ -934,7 +1022,7 @@ void IG_huffman(Image_Gene* ig){
         int_to_binary_array(iter->first, &new_data_v);
         bt = bt_coding[iter->first];
 
-        for(int j = 0 ; j < 32-bt->bincode_size ; j++)
+        for(int j = 0 ; j < 24-bt->bincode_size ; j++)
             new_data_v.push_back(0);
         for(int j = 0 ; j < bt->bincode_size ; j++)
             new_data_v.push_back(bt->bincode[j]);
@@ -961,22 +1049,30 @@ void IG_huffman_inv(Image_Gene* ig){
     std::vector<int> new_data_v;
     std::string kek = "", cod = "";
 
-    int size_val = 32, size_key = 32;
+    int size_val = 24, size_key = 24;
 
     for(int i=0; i<size_val; i++){
         kek = kek+std::to_string(ig->data[i]);
     }
-    ig->width = std::stoi(kek, nullptr, 2);
+    ig->width = std::stoull(kek, NULL, 2);
     kek = "";
-    for(int i=size_val; i<size_val; i++){
-        kek = kek+std::to_string(ig->data[i]);
+    for(int i=0; i<size_val; i++){
+        kek = kek+std::to_string(ig->data[size_val+i]);
     }
-    ig->height = std::stoi(kek, nullptr, 2);
+    ig->height = std::stoull(kek, NULL, 2);
+
+
+    ig->compression_level = 0;
+    ig->max_compression_level = (int)(log2(ig->width));
+    ig->subdivisions = ig->max_compression_level;
+
+
+
     kek = "";
-    for(int i=size_val*2; i<size_val; i++){
-        kek = kek+std::to_string(ig->data[i]);
+    for(int i=0; i<size_val; i++){
+        kek = kek+std::to_string(ig->data[size_val*2+i]);
     }
-    int posi, dic_size = std::stoi(kek, nullptr, 2);
+    int posi, dic_size = std::stoull(kek, NULL, 2);
 
 
     std::cout << "size dessa merda\n";

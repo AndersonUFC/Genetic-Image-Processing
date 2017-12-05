@@ -72,9 +72,8 @@ int main(int argc, char *argv[]){
     }
     f = 9;
     b = 9;
-
-    //Image_Gene_Float* pau = IG_int_to_float(img);
-
+    Image_Gene_Float* kek;
+/*
     Image_Gene_Float* kek = IG_int_to_float(img);
     mult(50, kek);
     for(int i = 0 ; i < f ; i++)
@@ -87,11 +86,9 @@ int main(int argc, char *argv[]){
     IG_run_length(img);
     IG_huffman(img);
 
-    IG_save_file(img, "/home/nfs/andersonUFC/Pictures/lena");
-    std::cout << img->size;
+    IG_save_file(img, "/home/nfs/andersonUFC/Pictures/lena");*/
     //IG_print(img);
     IG_read_file(img, "/home/nfs/andersonUFC/Pictures/lena");
-    std::cout << img->size;
 
     IG_huffman_inv(img);
     IG_run_length_inv(img);
