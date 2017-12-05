@@ -922,6 +922,11 @@ void IG_huffman(Image_Gene* ig){
 
     std::vector<int> new_data_v;
     IG_Binary_Tree* bt;
+
+    //informations of the image
+
+    int_to_binary_array(ig->width, &new_data_v);
+    int_to_binary_array(ig->height, &new_data_v);
     int_to_binary_array(elements.size(), &new_data_v);
 
     for(std::map<int,int>::iterator iter = elements.begin(); iter != elements.end(); ++iter)
@@ -961,11 +966,20 @@ void IG_huffman_inv(Image_Gene* ig){
     for(int i=0; i<size_val; i++){
         kek = kek+std::to_string(ig->data[i]);
     }
+    ig->width = std::stoi(kek, nullptr, 2);
+    kek = "";
+    for(int i=size_val; i<size_val; i++){
+        kek = kek+std::to_string(ig->data[i]);
+    }
+    ig->height = std::stoi(kek, nullptr, 2);
+    kek = "";
+    for(int i=size_val*2; i<size_val; i++){
+        kek = kek+std::to_string(ig->data[i]);
+    }
     int posi, dic_size = std::stoi(kek, nullptr, 2);
 
 
     std::cout << "size dessa merda\n";
-    std::cout << std::stoull("00000000000000111000001111001011", NULL, 2) << "\n";
     std::cout << dic_size;
     std::cout << "cabô\n";
 
@@ -973,17 +987,17 @@ void IG_huffman_inv(Image_Gene* ig){
         kek = "";
         cod = "";
         for(int i=0; i<size_val; i++){
-            posi = size_val + j*(size_val+size_key) + i;
+            posi = size_val*3 + j*(size_val+size_key) + i;
             kek = kek+std::to_string(ig->data[posi]);
         }
         for(int i=0; i<size_key; i++){
-            posi = size_val*2 + j*(size_val+size_key) + i;
+            posi = size_val*4 + j*(size_val+size_key) + i;
             cod = cod+std::to_string(ig->data[posi]);
         }
         mapa[std::to_string(std::stoull(cod))] = std::stoull(kek, NULL, 2);
     }
     cod = "";
-    for(int i = size_val+dic_size*(size_val+size_key); i<ig->size; i++){
+    for(int i = size_val*3+dic_size*(size_val+size_key); i<ig->size; i++){
         cod = cod+std::to_string(ig->data[i]);
         if (mapa.count(cod)){
             new_data_v.push_back(mapa[cod]);
@@ -1059,7 +1073,6 @@ void IG_print_float(Image_Gene_Float* ig){
 
 
 void IG_save_file(Image_Gene* ig, std::string name){
-
 
     std::ofstream file (name+".bin", std::ios::binary);
     std::string bin = "";
