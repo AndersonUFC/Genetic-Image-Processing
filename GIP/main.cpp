@@ -75,12 +75,12 @@ int main(int argc, char *argv[]){
 
     //Image_Gene_Float* pau = IG_int_to_float(img);
 
-    Image_Gene_Float* pau = IG_int_to_float(img);
-    mult(50, pau);
+    Image_Gene_Float* kek = IG_int_to_float(img);
+    mult(50, kek);
     for(int i = 0 ; i < f ; i++)
-        IG_haar2D_subdivide_float(pau);
+        IG_haar2D_subdivide_float(kek);
 
-    img = IG_float_to_int(pau);
+    img = IG_float_to_int(kek);
 
     IG_predictive(img);
     sum(8500, img);
@@ -98,11 +98,11 @@ int main(int argc, char *argv[]){
     sum(-8500, img);
     IG_predictive_inv(img);
 
-    pau = IG_int_to_float(img);
+    kek = IG_int_to_float(img);
     for(int i = 0 ; i < b ; i++)
-            IG_haar2D_inv_subdivide_float(pau);
-    mult(0.02, pau);
-    img = IG_float_to_int(pau);
+            IG_haar2D_inv_subdivide_float(kek);
+    mult(0.02, kek);
+    img = IG_float_to_int(kek);
     //IG_print(img);
 
 
